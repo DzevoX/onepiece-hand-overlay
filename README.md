@@ -37,27 +37,9 @@ After that it updates itself every night, and whenever you push a change.
   run the whole tool inside OBS (View > Docks > Custom Browser Docks) so both
   sides are in the same browser.
 
-## Try it on your computer
-
-Browsers block loading data from a plain `file://` page, so use a tiny server:
-
-    python scripts/build_cards.py <path-to-punk-records> data
-    python -m http.server
-    # open http://localhost:8000
 
 ## Notes
 
 - Card data comes from [punk-records](https://github.com/buhbbl/punk-records)
   (English). Leaders and alternate-art versions (`_p1`, `_r1`) are skipped.
   Change the language by passing a folder name as the last argument in the workflow.
-- Card names and data belong to their owners. The tool uses no card images;
-  please don't add them to a public site.
-
-## Code and data
-
-- **The code** is yours. With no license file, others are technically not allowed
-  to reuse it. To make it free for everyone, add a one-file permissive license
-  (MIT or the Unlicense) at the repo root. This is optional.
-- **`data/cards.json`** is built from punk-records (AGPL-3.0) and credited in the
-  page footer. Keep it in `data/` and treat it separately from your code.
-- Card names and game data belong to their owners. This is not legal advice.
