@@ -43,3 +43,5 @@ After that it updates itself every night, and whenever you push a change.
 - Card data comes from [punk-records](https://github.com/buhbbl/punk-records)
   (English). Leaders and alternate-art versions (`_p1`, `_r1`) are skipped.
   Change the language by passing a folder name as the last argument in the workflow.
+
+- Made with Claude AI
