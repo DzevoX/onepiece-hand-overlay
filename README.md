@@ -17,7 +17,7 @@ It is a single HTML file with no build step, no server and no dependencies.
 
 ## How to use
 
-1. Open `index.html` in a browser (or host it, for example with GitHub Pages).
+1. Open onepiece-hand-overlay.netlify.app in a browser.
 2. Click **Load card data**. This downloads the card list once, which takes a minute or two.
 3. Search for cards and click them to build your hand.
 4. Use **Download PNG** or **Open overlay window** to get your hand out of the page.
