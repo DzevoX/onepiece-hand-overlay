@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Piece Card Strips</title>
+<style>
+:root{--bg:#f3f1ee;--fg:#1c1b1a;--panel:#fff;--line:#d8d4cf;--link:#0b5cad}
+@media (prefers-color-scheme:dark){:root{--bg:#17181a;--fg:#ecebe8;--panel:#222326;--line:#3a3b3f;--link:#7ab8ff}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:var(--link)}
+main{max-width:600px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:20px;margin:0 0 10px}h2{font-size:14px;margin:22px 0 8px;display:flex;justify-content:space-between}
+.bar{display:flex;gap:8px;align-items:center;font-size:13px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.bar span{flex:1}
+input,textarea,button{font:inherit;font-size:14px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--fg);padding:8px}
+input{width:100%;box-sizing:border-box}
+button{cursor:pointer}button.pri{background:#c8202a;color:#fff;border:0;font-weight:700}
+.strip{--c1:#555;--c2:#555;display:flex;align-items:center;gap:10px;height:46px;margin-bottom:8px;padding:0 10px 0 6px;border-radius:10px;color:var(--fg,#fff);border:2px solid rgba(255,255,255,.45);box-shadow:0 0 0 2px rgba(0,0,0,.55);background:linear-gradient(100deg,var(--c1),var(--c2));text-shadow:var(--ts,0 1px 2px rgba(0,0,0,.6));cursor:pointer}
+.cost{flex:none;width:30px;height:30px;border-radius:50%;background:var(--cd,#333);color:var(--fg,#fff);border:2px solid var(--fg,#fff);box-sizing:border-box;display:grid;place-items:center;font-weight:800;font-size:17px;text-shadow:none;}
+.name{flex:1;font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:3px 0}
+.idtag{display:inline-block;line-height:1.3;font-size:10px;font-weight:700;margin-left:8px;padding:1px 6px;border-radius:4px;background:var(--pill,rgba(0,0,0,.4));border:1px solid var(--fg,#fff);vertical-align:middle}
+.counter,.tag{flex:none;font-size:12px;font-weight:800;padding:3px 8px;border-radius:999px;background:var(--pill,rgba(0,0,0,.4));border:1px solid var(--fg,#fff)}
+.tag{font-size:11px;letter-spacing:1.5px;border-radius:6px}
+.power{flex:none;min-width:58px;text-align:right;font-weight:800;font-size:17px}
+.note{font-size:12px;opacity:.7;margin:6px 0}
+.hand{display:flex;flex-direction:column;align-items:flex-start;--sx:-24px}
+.hand.right{align-items:flex-end;--sx:24px}
+.hand .strip{height:36px;margin-bottom:6px;gap:8px;width:var(--w,340px);box-sizing:border-box}
+.hand .cost{width:24px;height:24px;font-size:14px}.hand .name{font-size:15px}.hand .power{font-size:15px;min-width:48px}
+.hand.noid .idtag,.hand.nostats .power,.hand.nostats .counter,.hand.nostats .tag{display:none}
+.checker{background:repeating-conic-gradient(#8884 0 25%,#0000 0 50%) 0 0/16px 16px;padding:8px;border-radius:10px;min-height:60px}
+.opts{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:13px;margin:8px 0}
+.opts input[type=number]{width:70px}.opts input[type=checkbox]{width:auto}
+details.about{margin-top:26px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px}details.about summary{cursor:pointer;font-weight:700;font-size:14px}details.about ul{margin:8px 0 4px;padding-left:18px}details.about li{margin:4px 0}
+.hand .strip{opacity:var(--a,1)}
+.hand .strip.in{animation:sIn .22s ease-out}
+.hand .strip.out{animation:sOut .22s ease-in forwards;pointer-events:none}
+@keyframes sIn{from{opacity:0;transform:translateX(var(--sx,-24px)) scale(.96)}to{opacity:var(--a,1);transform:none}}
+@keyframes sOut{from{opacity:var(--a,1);transform:none}to{opacity:0;transform:translateX(var(--sx,-24px)) scale(.96)}}
+@media (prefers-reduced-motion:reduce){.hand .strip.in,.hand .strip.out{animation:none}}
+.opts input[type=range]{width:110px;padding:0}
+body.ov main{padding:0;max-width:none}body.ov main>*:not(#hands){display:none}body.ov .strip{cursor:default}
+</style>
+</head>
+<body>
+<main>
+<h1>One Piece Card Strips</h1>
+<div class="bar"><span id="status">Starting…</span><button id="upd">Load card data</button><button id="wipe">Clear data</button></div>
+<div class="note">Card data comes from the <a href="https://github.com/buhbbl/punk-records">punk-records</a> project on GitHub. Nothing is downloaded until you click the button. It is saved in your browser, so you only need to do this once. "Clear data" removes it again.</div>
+ 
+<h2>Find cards</h2>
+<input id="q" placeholder="Search by name or set number (e.g. Luffy, OP03-070, luffy op14)">
+<div class="opts"><label>Add clicked cards to <select id="target"><option value="0">Player 1</option><option value="1">Player 2</option></select></label></div>
+<div id="results"></div>
+ 
+<div id="hands"></div>
+<div class="note">Click a strip in a hand to remove it. Each player has their own settings, PNG and overlay window. Use the PNGs in an editor, or capture each overlay window (green background plus chroma key) in OBS.</div>
+ 
+ 
+<details class="about"><summary>About &amp; transparency</summary>
+<ul>
+<li><b>Storage used:</b> <span id="store">calculating…</span></li>
+<li><b>What is saved:</b> the card list, both hands and your settings, in this browser's localStorage only. Nothing is stored on a server, and "Clear data" removes all of it.</li>
+<li><b>Network requests:</b> only when you click the button, to GitHub (raw.githubusercontent.com and api.github.com) and the jsDelivr CDN (cdn.jsdelivr.net and data.jsdelivr.com). Those services can see your IP address, like any website you visit.</li>
+<li><b>Privacy:</b> no accounts, no cookies, no analytics or tracking. Your hands are shared with the overlay windows through the browser itself, not over the internet.</li>
+<li><b>Limits:</b> leaders and alternate-art or variant cards are left out on purpose. Card data comes straight from punk-records, so it can lag behind new sets or contain mistakes.</li>
+<li><b>Feedback &amp; bug reports:</b> suggestions and bugs are welcome on <a href="https://github.com/DzevoX/onepiece-hand-overlay/issues">GitHub Issues</a>. A free GitHub account is needed to post. If you report a bug, please include the card ID, your browser and what you expected to happen.</li>
+<li><b>Made with AI:</b> this tool was built with help from an AI assistant (Claude).</li>
+<li><b>Unofficial:</b> not affiliated with or endorsed by Bandai, Shueisha or Toei Animation.</li>
+</ul></details>
+ 
+<p class="note" style="margin-top:28px">Unofficial fan tool, built with help from AI (Claude). Card data from <a href="https://github.com/buhbbl/punk-records">punk-records</a> (AGPL-3.0). One Piece Card Game is &copy; Eiichiro Oda/Shueisha, Toei Animation, Bandai.</p>
+</main>
+<script>
+const BASES=["https://raw.githubusercontent.com/buhbbl/punk-records/main/","https://cdn.jsdelivr.net/gh/buhbbl/punk-records@main/"];
+const LANG="english";
+const COLORS={Red:{c:"#d71f2a",d:"#9f141c",fg:"#fff"},Green:{c:"#149a5b",d:"#0c6b3d",fg:"#fff"},Blue:{c:"#1a7fc2",d:"#10578a",fg:"#fff"},Purple:{c:"#82338f",d:"#5a2064",fg:"#fff"},Black:{c:"#232325",d:"#0d0d0e",fg:"#fff"},Yellow:{c:"#f3cf13",d:"#c29f00",fg:"#1a1a1a"}};
+const col=n=>COLORS[n]||{c:"#555",d:"#333",fg:"#fff"};
+const ls={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+function skipId(id){return /_[a-z]+\d+$/i.test(id||"")}
+let cache=ls.get("cache",null),byId={};
+if(cache)cache.cards=cache.cards.filter(c=>c.type!=="Leader"&&!skipId(c.id));
+const $=id=>document.getElementById(id);
+const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!==undefined)e.textContent=x;return e};
+ 
+let lastErr="";
+async function get(path){
+for(const b of BASES){try{const r=await fetch(b+path,{cache:"no-cache"});if(r.ok)return await r.json();lastErr=b+path+" -> HTTP "+r.status}catch(e){lastErr=b+path+" -> "+e.message}}
+throw new Error("Could not load "+path)}
+ 
+function toArr(x){
+if(Array.isArray(x))return x;
+if(x&&typeof x==="object"){
+for(const k of ["packs","cards","data","items","results"])if(Array.isArray(x[k]))return x[k];
+return Object.entries(x).map(([k,v])=>v&&typeof v==="object"?Object.assign({id:k},v):v)}
+return []}
+function index(){byId={};(cache?cache.cards:[]).forEach(c=>{if(!byId[c.id])byId[c.id]=c})}
+function say(t){$("status").textContent=t}
+function stamp(){return cache?cache.cards.length+" cards · updated "+new Date(cache.at).toLocaleString():"No card data yet"}
+ 
+async function listFiles(){
+try{const r=await fetch("https://api.github.com/repos/buhbbl/punk-records/git/trees/main?recursive=1");
+if(r.ok){const j=await r.json();if(!j.truncated)return j.tree.filter(t=>t.type==="blob").map(t=>({path:t.path,sha:t.sha}))}}catch(e){}
+const j=await(await fetch("https://data.jsdelivr.com/v1/packages/gh/buhbbl/punk-records@main?structure=flat")).json();
+return(j.files||[]).map(f=>({path:f.name.slice(1),sha:f.hash}))}
+ 
+function fmtB(b){return b<1024?b+" B":b<1048576?(b/1024).toFixed(1)+" KB":(b/1048576).toFixed(2)+" MB"}
+function updStore(){
+const e=$("store");if(!e)return;
+let t=0;const parts=[];
+try{["cache","hand","hand2","opts","opts2"].forEach(k=>{const v=localStorage.getItem(k);if(v!==null){const b=(k.length+v.length)*2;t+=b;parts.push(({cache:"card data",hand:"hand 1",hand2:"hand 2",opts:"settings 1",opts2:"settings 2"})[k]+" "+fmtB(b))}});
+e.textContent=t?fmtB(t)+" ("+parts.join(", ")+"). Browsers usually allow about 5 MB per site.":"nothing saved yet."}
+catch(x){e.textContent="could not be measured in this browser."}}
+function setBtn(){updStore();$("upd").disabled=false;$("upd").textContent=cache?"Check for updates":"Load card data"}
+function idle(){
+say(cache?cache.cards.length+" cards saved in your browser (updated "+new Date(cache.at).toLocaleDateString()+"). Click 'Check for updates' to see if punk-records has newer data.":"No card data yet. Click 'Load card data' to download the card list from punk-records (GitHub). It takes a minute or two and is saved in your browser.");
+setBtn()}
+async function sync(force){
+try{
+$("upd").disabled=true;$("upd").textContent="Working…";
+say("Contacting punk-records on GitHub…");
+const man=await get(LANG+"/manifest.json");
+if(!force&&cache&&cache.gen===man.generated_at){say("Up to date · "+stamp());return}
+const want=(await listFiles()).filter(f=>f.path.startsWith(LANG+"/cards/")&&f.path.endsWith(".json")&&!skipId(f.path.slice(0,-5).split("/").pop()));
+if(!want.length)throw new Error("no card files found in "+LANG+"/cards");
+const prev=(cache&&cache.files)||{},files={};
+const have=new Set();
+want.forEach(f=>{if(prev[f.path]===f.sha){have.add(f.path);files[f.path]=f.sha}});
+const cards=(cache?cache.cards:[]).filter(c=>c.f&&have.has(c.f));
+const todo=want.filter(f=>!have.has(f.path));
+let done=0,failed=0;
+await Promise.all(Array.from({length:16},async()=>{
+while(todo.length){const f=todo.shift();
+try{const j=await get(f.path);
+(Array.isArray(j)?j:j&&j.id?[j]:toArr(j)).filter(c=>c.category!=="Leader"&&!skipId(c.id)).forEach(c=>cards.push({id:c.id,name:c.name,type:c.category,colors:c.colors||[],cost:c.cost,power:c.power,counter:c.counter,f:f.path}));
+files[f.path]=f.sha}catch(e){failed++}
+if(++done%25===0||!todo.length)say("Downloading card data from punk-records… "+done+" files")}}));
+if(!cards.length)throw new Error("No cards found. Last error: "+lastErr);
+cache={gen:man.generated_at,at:Date.now(),files,cards};ls.set("cache",cache);index();
+say("Updated · "+stamp()+(failed?" · "+failed+" files failed (will retry next update)":""));
+}catch(e){say((cache?"Could not reach GitHub, using saved data · "+stamp():"Could not reach GitHub: "+e.message+" · click the button to try again"))}
+index();search();setBtn()}
+ 
+const num=v=>{const x=parseInt(v,10);return isNaN(x)?0:x};
+function strip(c,fn){
+const d=el("div","strip"),cs=c.colors.length?c.colors:["Black"];
+const a=col(cs[0]),b=col(cs[1]||cs[0]),lt=a.fg==="#fff";
+d.style.setProperty("--c1",a.c);d.style.setProperty("--c2",b.c);d.style.setProperty("--cd",a.d);d.style.setProperty("--fg",a.fg);
+d.style.setProperty("--ts",lt?"0 1px 2px rgba(0,0,0,.6)":"none");d.style.setProperty("--pill",lt?"rgba(0,0,0,.4)":"rgba(0,0,0,.12)");
+d.append(el("div","cost",c.type==="Leader"?"–":String(num(c.cost))));
+const n=el("div","name",c.name);n.append(el("span","idtag",c.id));d.append(n);
+if(c.type==="Character"||c.type==="Leader"){
+if(c.type==="Leader")d.append(el("div","tag","LIFE "+c.cost));
+if(num(c.counter)>0)d.append(el("div","counter","+"+num(c.counter)));
+d.append(el("div","power",String(num(c.power))));
+}else d.append(el("div","tag",(c.type||"").toUpperCase()));
+d.onclick=fn;return d}
+ 
+function search(){
+const q=$("q").value.trim().toLowerCase(),box=$("results");box.innerHTML="";
+if(!q||!cache)return;
+const terms=q.split(/\s+/).filter(Boolean);
+(cache.cards.filter(c=>{const hay=(c.name+" "+c.id).toLowerCase();return terms.every(t=>hay.includes(t))}).slice(0,100)).forEach(c=>box.append(strip(c,()=>{const i=+$("target").value;P[i].hand.push(Object.assign({},c,{uid:newUid()}));saveHand(i)})))}
+ 
+$("q").oninput=search;
+$("upd").onclick=()=>sync(true);
+ 
+const OV=location.hash.startsWith("#overlay"),OVP=location.hash==="#overlay2"?1:0;
+const DEF={ids:true,stats:true,bg:"transparent",w:340,alpha:100,side:"left"};
+const KEYS=[["hand","opts"],["hand2","opts2"]];
+const newUid=()=>Math.random().toString(36).slice(2)+Date.now().toString(36);
+const P=KEYS.map(k=>({hand:ls.get(k[0],[]),opts:Object.assign({},DEF,ls.get(k[1],{})),prev:null,leaving:new Set(),rt:0}));
+const ensureUids=p=>p.hand.forEach(c=>{if(!c.uid)c.uid=newUid()});
+P.forEach(ensureUids);
+const bc=window.BroadcastChannel?new BroadcastChannel("ophand"):null;
+function saveHand(i){const p=P[i];ls.set(KEYS[i][0],p.hand);ls.set(KEYS[i][1],p.opts);if(bc)bc.postMessage({i,hand:p.hand,opts:p.opts});drawHand(i);updStore()}
+function syncView(i){
+const p=P[i];ensureUids(p);
+if(OV&&p.prev){const nu=new Set(p.hand.map(c=>c.uid)),gone=[];
+p.prev.forEach((u,k)=>{if(!nu.has(u))gone.push(k)});
+if(gone.length===1&&p.hand.length===p.prev.length-1){const node=$("hand"+i).children[gone[0]];
+if(node){node.classList.add("out");clearTimeout(p.rt);p.rt=setTimeout(()=>drawHand(i),230);return}}}
+drawHand(i)}
+if(bc)bc.onmessage=e=>{const i=e.data.i;if(i!==0&&i!==1)return;P[i].hand=e.data.hand;P[i].opts=e.data.opts;if(!OV||i===OVP)syncView(i)};
+addEventListener("storage",()=>{if(OV&&!bc){const p=P[OVP];p.hand=ls.get(KEYS[OVP][0],[]);p.opts=Object.assign({},p.opts,ls.get(KEYS[OVP][1],{}));syncView(OVP)}});
+const removeCard=i=>function(){
+const p=P[i],u=this.dataset.uid;if(p.leaving.has(u))return;
+p.leaving.add(u);this.classList.add("out");
+setTimeout(()=>{p.leaving.delete(u);const k=p.hand.findIndex(c=>c.uid===u);if(k>-1){p.hand.splice(k,1);saveHand(i)}},230)};
+function drawHand(i){
+const p=P[i],o=p.opts,box=$("hand"+i),oldTop=new Map();
+[...box.children].forEach(n=>{if(n.dataset.uid&&!n.classList.contains("out"))oldTop.set(n.dataset.uid,n.getBoundingClientRect().top)});
+box.innerHTML="";
+box.className="hand"+(o.ids?"":" noid")+(o.stats?"":" nostats")+(o.side==="right"?" right":"")+(!OV?" checker":"");
+box.style.setProperty("--w",o.w+"px");box.style.setProperty("--a",(o.alpha??100)/100);
+const before=p.prev?new Set(p.prev):null;
+p.hand.forEach(c=>{const d=strip(c,OV?null:removeCard(i));d.dataset.uid=c.uid;
+if(before&&!before.has(c.uid))d.classList.add("in");
+if(p.leaving.has(c.uid))d.classList.add("out");
+box.append(d)});
+p.prev=p.hand.map(c=>c.uid);
+if(oldTop.size&&!matchMedia("(prefers-reduced-motion:reduce)").matches)[...box.children].forEach(n=>{
+const t=oldTop.get(n.dataset.uid);if(t===undefined)return;
+const d=t-n.getBoundingClientRect().top;
+if(Math.abs(d)>1)n.animate([{transform:"translateY("+d+"px)"},{transform:"none"}],{duration:170,easing:"ease-out"})});
+if(OV){document.body.style.background=o.bg;return}
+$("hcount"+i).textContent=p.hand.length+" cards";
+$("oid"+i).checked=o.ids;$("ost"+i).checked=o.stats;$("ow"+i).value=o.w;$("oside"+i).value=o.side||"left";$("obg"+i).value=o.bg;$("oal"+i).value=o.alpha??100;$("oalv"+i).textContent=(o.alpha??100)+"%"}
+function png(i){const hand=P[i].hand,opts=P[i].opts;
+if(!hand.length)return;
+const S=2,W=opts.w,H=36,G=6,F="system-ui,-apple-system,Segoe UI,sans-serif";
+const cv=document.createElement("canvas");cv.width=W*S;cv.height=(hand.length*(H+G)-G)*S;
+const x=cv.getContext("2d");x.scale(S,S);x.textBaseline="middle";
+hand.forEach((c,i)=>{
+const y=i*(H+G),m=y+H/2+1,cs=c.colors.length?c.colors:["Black"];
+x.shadowBlur=0;x.globalAlpha=(opts.alpha??100)/100;
+const g=x.createLinearGradient(0,0,W,0);const a=col(cs[0]);g.addColorStop(0,a.c);g.addColorStop(1,col(cs[1]||cs[0]).c);
+x.beginPath();x.roundRect(1,y+1,W-2,H-2,9);x.fillStyle=g;x.fill();x.lineWidth=2;x.strokeStyle="rgba(255,255,255,.45)";x.stroke();
+x.beginPath();x.arc(20,y+H/2,11,0,7);x.fillStyle=a.d;x.fill();x.lineWidth=2;x.strokeStyle=a.fg;x.stroke();
+x.fillStyle=a.fg;x.textAlign="center";x.font="800 14px "+F;x.fillText(c.type==="Leader"?"\u2013":String(num(c.cost)),20,m);
+x.fillStyle=a.fg;x.shadowColor="rgba(0,0,0,.6)";x.shadowBlur=a.fg==="#fff"?2:0;
+let rx=W-10;x.textAlign="right";
+if(opts.stats){
+if(c.type==="Character"||c.type==="Leader"){x.font="800 15px "+F;x.fillText(String(num(c.power)),rx,m);rx-=54;
+if(c.type==="Leader"){x.font="800 10px "+F;x.fillText("LIFE "+c.cost,rx,m);rx-=56}
+if(num(c.counter)>0){x.font="800 11px "+F;x.fillText("+"+num(c.counter),rx,m);rx-=46}}
+else{x.font="800 10px "+F;x.fillText((c.type||"").toUpperCase(),rx,m);rx-=64}}
+x.textAlign="left";x.font="700 15px "+F;
+let t=c.name;const max=rx-44;while(x.measureText(t).width>max&&t.length>1)t=t.slice(0,-1);if(t!==c.name)t=t.trimEnd()+"\u2026";
+x.fillText(t,38,m);
+if(opts.ids){const w=x.measureText(t).width;x.font="700 10px "+F;if(38+w+8+x.measureText(c.id).width<rx)x.fillText(c.id,46+w,m)}
+});
+cv.toBlob(b=>{const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="hand-player"+(i+1)+".png";a.click()})};
+function build(){
+const h=$("hands");
+if(OV){const b=el("div");b.id="hand"+OVP;h.append(b);return}
+P.forEach((p,i)=>{
+const s=el("div","pl");
+s.innerHTML=`<h2>Hand overlay · Player ${i+1} <span id="hcount${i}"></span></h2>
+<div class="opts">
+<label><input type="checkbox" id="oid${i}"> Set number</label>
+<label><input type="checkbox" id="ost${i}"> Power / counter</label>
+<label>Width <input type="number" id="ow${i}" min="200" max="700" step="10"></label>
+<label>Cards start <select id="oside${i}"><option value="left">Left</option><option value="right">Right</option></select></label>
+<label>Card opacity <input type="range" id="oal${i}" min="10" max="100" step="5"> <span id="oalv${i}">100%</span></label>
+<label>Window background <select id="obg${i}"><option value="transparent">Transparent</option><option value="#00ff00">Green</option><option value="#000000">Black</option></select></label>
+</div>
+<div id="hand${i}"></div>
+<div class="opts"><button class="pri" id="png${i}">Download PNG</button><button id="win${i}">Open overlay window</button><button id="clr${i}">Clear hand</button></div>`;
+h.append(s);
+const g=k=>$(k+i),save=()=>saveHand(i);
+g("oid").onchange=()=>{p.opts.ids=g("oid").checked;save()};
+g("ost").onchange=()=>{p.opts.stats=g("ost").checked;save()};
+g("ow").onchange=()=>{p.opts.w=Math.min(700,Math.max(200,+g("ow").value||340));save()};
+g("oal").oninput=()=>{p.opts.alpha=Math.min(100,Math.max(10,+g("oal").value||100));save()};
+g("oside").onchange=()=>{p.opts.side=g("oside").value;save()};
+g("obg").onchange=()=>{p.opts.bg=g("obg").value;save()};
+g("clr").onclick=()=>{p.hand=[];save()};
+g("png").onclick=()=>png(i);
+g("win").onclick=()=>window.open(location.href.split("#")[0]+"#overlay"+(i?"2":""),"ophand"+i,"width="+(p.opts.w+40)+",height=520")})}
+$("wipe").onclick=()=>{
+if(!confirm("Remove everything this page has saved in your browser: the card data, both hands and your settings?\n\nYou can download the card data again at any time."))return;
+["cache","hand","hand2","opts","opts2","deck"].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});
+cache=null;
+P.forEach((p,i)=>{p.hand=[];p.opts=Object.assign({},DEF);if(bc)bc.postMessage({i,hand:p.hand,opts:p.opts});drawHand(i)});
+index();search();idle()};
+if(OV){document.body.classList.add("ov");build();drawHand(OVP)}else{build();index();P.forEach((p,i)=>drawHand(i));idle()}
+</script>
+</body>
+</html>
+ 
+
+
+
